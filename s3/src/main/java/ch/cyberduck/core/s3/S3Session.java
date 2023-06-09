@@ -65,7 +65,7 @@ import ch.cyberduck.core.ssl.DisabledX509TrustManager;
 import ch.cyberduck.core.ssl.ThreadLocalHostnameDelegatingTrustManager;
 import ch.cyberduck.core.ssl.X509KeyManager;
 import ch.cyberduck.core.ssl.X509TrustManager;
-import ch.cyberduck.core.sts.NonAwsSTSCredentialsConfigurator;
+import ch.cyberduck.core.sts.AssumeRoleWithWebIdentitySTSCredentialsConfigurator;
 import ch.cyberduck.core.sts.STSCredentialsConfigurator;
 import ch.cyberduck.core.threading.BackgroundExceptionCallable;
 import ch.cyberduck.core.threading.CancelCallback;
@@ -183,14 +183,11 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
     protected RequestEntityRestStorageService connect(final Proxy proxy, final HostKeyCallback hostkey, final LoginCallback prompt, final CancelCallback cancel) {
         final HttpClientBuilder configuration = builder.build(proxy, this, prompt);
 
-        if (host.getProtocol().getOAuthAuthorizationUrl() != null) {
+        if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
             authorizationService = new OAuth2RequestInterceptor(builder.build(ProxyFactory.get()
                     .find(host.getProtocol().getOAuthAuthorizationUrl()), this, prompt).build(), host)
                     .withRedirectUri(host.getProtocol().getOAuthRedirectUrl())
                     .withFlowType(OAuth2AuthorizationService.FlowType.valueOf(host.getProtocol().getAuthorization()));
-//            authorizationService.withParameter("grant_type", "password");
-//            authorizationService.withParameter("username", "testi");
-//            authorizationService.withParameter("password", "test");
             configuration.addInterceptorLast(authorizationService);
             configuration.setServiceUnavailableRetryStrategy(new OAuth2ErrorResponseInterceptor(host, authorizationService, prompt));
         }
@@ -200,6 +197,10 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
             configuration.setServiceUnavailableRetryStrategy(new S3TokenExpiredResponseInterceptor(this,
                     new ThreadLocalHostnameDelegatingTrustManager(trust, host.getHostname()), key, prompt));
         }
+        // TODO check with DK: what's the criterion on host to go for AssumeRoleWithWebIdentity?
+        // TODO check with DK: the logic seems to be upside down: currently, the OAuth2 interceptor is triggered every time the OAuth credentials expire.
+        configuration.setServiceUnavailableRetryStrategy(new S3WebIdentityTokenExpiredResponseInterceptor(this,
+                new ThreadLocalHostnameDelegatingTrustManager(trust, host.getHostname()), key, prompt));
         final RequestEntityRestStorageService client = new RequestEntityRestStorageService(this, configuration);
         client.setRegionEndpointCache(regions);
         return client;
@@ -207,7 +208,7 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
 
     @Override
     public void login(final Proxy proxy, final LoginCallback prompt, final CancelCallback cancel) throws BackgroundException {
-        if (host.getProtocol().getOAuthAuthorizationUrl() != null) {
+        if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
             authorizationService.authorize(host, prompt, cancel);
 
         }
@@ -232,8 +233,8 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
                         new ThreadLocalHostnameDelegatingTrustManager(trust, host.getHostname()), key, prompt).configure(host);
             }
             // get temporary credentials for MinIO with Web Identity (OIDC)
-            else if (host.getProtocol().getOAuthAuthorizationUrl() != null) {
-                credentials = new NonAwsSTSCredentialsConfigurator(new ThreadLocalHostnameDelegatingTrustManager(trust,
+            else if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
+                credentials = new AssumeRoleWithWebIdentitySTSCredentialsConfigurator(new ThreadLocalHostnameDelegatingTrustManager(trust,
                         host.getHostname()), key, prompt).configure(host);
             }
             else {
@@ -243,6 +244,20 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
                 client.setProviderCredentials(credentials.isAnonymousLogin() ? null :
                         new AWSSessionCredentials(credentials.getUsername(), credentials.getPassword(),
                                 credentials.getToken()));
+                // TODO remove the following snippet: sanity check that STS credentials are valid with AWS Java SDK
+                //                https://www.demo2s.com/java/amazon-aws-assumerolewithwebidentityrequest-tutorial-with-examples.html
+                //  import com.amazonaws.auth.BasicSessionCredentials;
+                //  import com.amazonaws.services.s3.AmazonS3;
+                //  import com.amazonaws.services.s3.AmazonS3Client;
+                //  import com.amazonaws.services.s3.model.Bucket;
+                //  BasicSessionCredentials temporarySessionCredentials = new BasicSessionCredentials(
+                //          credentials.getUsername(), credentials.getPassword(),
+                //          credentials.getToken());
+                //  //Accessing AWS Resources (S3)
+                //  AmazonS3 s3Client = new AmazonS3Client(temporarySessionCredentials);
+                //  s3Client.setEndpoint(String.format("%s://%s:%s", host.getProtocol().getScheme(), host.getHostname(), host.getPort()));
+                //  final List<Bucket> buckets = s3Client.listBuckets();
+                //  log.info("buckets={}", buckets);
             }
             else {
                 client.setProviderCredentials(credentials.isAnonymousLogin() ? null :
