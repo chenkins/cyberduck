@@ -20,33 +20,35 @@
         <key>Protocol</key>
         <string>s3</string>
         <key>Vendor</key>
-        <string>iterate GmbH</string>
+        <string>s3-sts</string>
         <key>Bundled</key>
         <true/>
-        <key>Default Hostname</key>
-        <string>localhost:9000</string>
+        <key>Description</key>
+        <string>S3 STS AssumeRoleWithWebIdentity with Google</string>
         <key>Default Nickname</key>
+        <string>S3 STS</string>
+        <key>Default Hostname</key>
+        <string>s3.amazonaws.com</string>
+        <key>Regions</key>
+        <array>
+            <string>eu-central-1</string>
+        </array>
         <key>Scheme</key>
-        <string>http</string>
-        <string>MinIO</string>
+        <string>https</string>
         <key>Authorization</key>
-        <string>PasswordGrant</string>
+        <string>AuthorizationCode</string>
         <key>OAuth Authorization Url</key>
-        <string>http://localhost:8080/realms/cyberduckrealm/protocol/openid-connect/auth</string>
+        <string>https://accounts.google.com/o/oauth2/auth</string>
         <key>OAuth Token Url</key>
-        <string>http://localhost:8080/realms/cyberduckrealm/protocol/openid-connect/token</string>
-        <key>OAuth Client ID</key>
-        <string>minio</string>
-        <key>OAuth Client Secret</key>
-        <string>password</string>
-        <key>OAuth Redirect Url</key>
-        <string>x-cyberduck-action:oauth</string>
+        <string>https://oauth2.googleapis.com/token</string>
         <key>Scopes</key>
         <array>
             <string>openid</string>
-            <string>profile</string>
-            <string>minio-authorization</string>
         </array>
+        <key>OAuth Client ID</key>
+        <string>996125414232-s922bvdt21nceeh5dq1gb6av8plpj7hr.apps.googleusercontent.com</string>
+        <key>OAuth Redirect Url</key>
+        <string>io.cyberduck:oauth</string>
         <key>Password Configurable</key>
         <false/>
         <key>Username Configurable</key>

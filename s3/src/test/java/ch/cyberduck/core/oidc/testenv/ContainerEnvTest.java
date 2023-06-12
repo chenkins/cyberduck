@@ -42,7 +42,6 @@ import ch.cyberduck.core.s3.S3Session;
 import ch.cyberduck.core.serializer.impl.dd.ProfilePlistReader;
 import ch.cyberduck.core.ssl.DefaultX509KeyManager;
 import ch.cyberduck.core.ssl.DefaultX509TrustManager;
-import ch.cyberduck.core.sts.NonAwsSTSCredentialsConfigurator;
 
 import org.junit.After;
 import org.junit.Before;

@@ -30,6 +30,7 @@ import com.amazonaws.auth.AnonymousAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityResult;
 
@@ -48,8 +49,8 @@ public class AssumeRoleWithWebIdentitySTSCredentialsConfigurator extends STSCred
         // STS API is open, no authorization required
         final AWSSecurityTokenService service = AWSSecurityTokenServiceClientBuilder
                 .standard()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(String.format("%s://%s:%s", host.getProtocol().getScheme(), host.getHostname(),
-                        host.getPort()), null))
+                // TODO hard-coded STS-endpoint
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(String.format("https://sts.amazonaws.com"), null))
                 .withCredentials(new AWSCredentialsProvider() {
                     @Override
                     public AWSCredentials getCredentials() {
@@ -66,20 +67,30 @@ public class AssumeRoleWithWebIdentitySTSCredentialsConfigurator extends STSCred
 
 
         AssumeRoleWithWebIdentityRequest webIdReq = new AssumeRoleWithWebIdentityRequest()
-                .withWebIdentityToken(credentials.getOauth().getAccessToken());
-        // TODO check with DK: make configurable in profile/bookmark?
-        // TODO also: TTL configurable in profile/bookmark?
-        //                .withRoleArn("consoleAdmin")
-        //                .withRoleSessionName("blabla")
-        //                .withPolicy("policy");
+                // TODO check with DK: make configurable in profile/bookmark?
+                .withWebIdentityToken(credentials.getToken())
+                // TODO hard-coded -> connection profile/bookmark?
+                .withDurationSeconds(3000)
+                // TODO hard-coded -> connection profile/bookmark?
+                .withRoleArn("arn:aws:iam::930717317329:role/google-Test-Role")
+                // TODO hard-coded -> connection profile/bookmark?
+                .withRoleSessionName("cyberduck-test");
+                // TODO do we need to make (ad-hoc) policy configurable as well?
 
-        AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(webIdReq);
-        com.amazonaws.services.securitytoken.model.Credentials cred = result.getCredentials();
+        try {
+            AssumeRoleWithWebIdentityResult result = service.assumeRoleWithWebIdentity(webIdReq);
+            com.amazonaws.services.securitytoken.model.Credentials cred = result.getCredentials();
 
-        credentials.setUsername(cred.getAccessKeyId());
-        credentials.setPassword(cred.getSecretAccessKey());
-        credentials.setToken(cred.getSessionToken());
+            // TODO is this the right way? Something goes wrong, the token gets empty, Caused by: com.amazonaws.services.securitytoken.model.AWSSecurityTokenServiceException: 1 validation error detected: Value at 'webIdentityToken' failed to satisfy constraint: Member must have length greater than or equal to 4
+            credentials.setUsername(cred.getAccessKeyId());
+            credentials.setPassword(cred.getSecretAccessKey());
+            credentials.setToken(cred.getSessionToken());
+            return credentials;
+        }
+        catch(AWSSecurityTokenServiceException e) {
+            throw e;
+        }
 
-        return credentials;
+
     }
 }

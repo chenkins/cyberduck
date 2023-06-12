@@ -227,13 +227,14 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
         else {
             final Credentials credentials;
             // Only for AWS
-            if(isAwsHostname(host.getHostname())) {
-                // Try auto-configure
-                credentials = new STSCredentialsConfigurator(
-                        new ThreadLocalHostnameDelegatingTrustManager(trust, host.getHostname()), key, prompt).configure(host);
-            }
-            // get temporary credentials for MinIO with Web Identity (OIDC)
-            else if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
+//            if(isAwsHostname(host.getHostname())) {
+//                // Try auto-configure
+//                credentials = new STSCredentialsConfigurator(
+//                        new ThreadLocalHostnameDelegatingTrustManager(trust, host.getHostname()), key, prompt).configure(host);
+//            }
+//            // get temporary credentials for MinIO with Web Identity (OIDC)
+//            else
+                if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
                 credentials = new AssumeRoleWithWebIdentitySTSCredentialsConfigurator(new ThreadLocalHostnameDelegatingTrustManager(trust,
                         host.getHostname()), key, prompt).configure(host);
             }
