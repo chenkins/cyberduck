@@ -227,6 +227,7 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
         else {
             final Credentials credentials;
             // Only for AWS
+            // TODO the following snippet should work again - add condition if no STS URL
 //            if(isAwsHostname(host.getHostname())) {
 //                // Try auto-configure
 //                credentials = new STSCredentialsConfigurator(
@@ -234,6 +235,7 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
 //            }
 //            // get temporary credentials for MinIO with Web Identity (OIDC)
 //            else
+            // TODO only if STS URL in configuration
                 if(host.getProtocol().getOAuthAuthorizationUrl() != null) {
                 credentials = new AssumeRoleWithWebIdentitySTSCredentialsConfigurator(new ThreadLocalHostnameDelegatingTrustManager(trust,
                         host.getHostname()), key, prompt).configure(host);
@@ -245,20 +247,6 @@ public class S3Session extends HttpSession<RequestEntityRestStorageService> {
                 client.setProviderCredentials(credentials.isAnonymousLogin() ? null :
                         new AWSSessionCredentials(credentials.getUsername(), credentials.getPassword(),
                                 credentials.getToken()));
-                // TODO remove the following snippet: sanity check that STS credentials are valid with AWS Java SDK
-                //                https://www.demo2s.com/java/amazon-aws-assumerolewithwebidentityrequest-tutorial-with-examples.html
-                //  import com.amazonaws.auth.BasicSessionCredentials;
-                //  import com.amazonaws.services.s3.AmazonS3;
-                //  import com.amazonaws.services.s3.AmazonS3Client;
-                //  import com.amazonaws.services.s3.model.Bucket;
-                //  BasicSessionCredentials temporarySessionCredentials = new BasicSessionCredentials(
-                //          credentials.getUsername(), credentials.getPassword(),
-                //          credentials.getToken());
-                //  //Accessing AWS Resources (S3)
-                //  AmazonS3 s3Client = new AmazonS3Client(temporarySessionCredentials);
-                //  s3Client.setEndpoint(String.format("%s://%s:%s", host.getProtocol().getScheme(), host.getHostname(), host.getPort()));
-                //  final List<Bucket> buckets = s3Client.listBuckets();
-                //  log.info("buckets={}", buckets);
             }
             else {
                 client.setProviderCredentials(credentials.isAnonymousLogin() ? null :
