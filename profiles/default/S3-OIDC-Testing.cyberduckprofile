@@ -20,7 +20,7 @@
         <key>Protocol</key>
         <string>s3</string>
         <key>Vendor</key>
-        <string>iterate GmbH</string>
+        <string>s3-sts-localhost-testing</string>
         <key>Bundled</key>
         <true/>
         <key>Default Hostname</key>

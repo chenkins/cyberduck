@@ -20,7 +20,7 @@
         <key>Protocol</key>
         <string>s3</string>
         <key>Vendor</key>
-        <string>s3-sts</string>
+        <string>s3-sts-google</string>
         <key>Bundled</key>
         <true/>
         <key>Description</key>
