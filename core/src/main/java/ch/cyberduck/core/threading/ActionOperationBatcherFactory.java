@@ -32,14 +32,14 @@ public class ActionOperationBatcherFactory extends Factory<ActionOperationBatche
 
     private Constructor<? extends ActionOperationBatcher> constructor;
 
-    public ActionOperationBatcherFactory() {
+    private ActionOperationBatcherFactory() {
         super("factory.autorelease.class");
     }
 
     public ActionOperationBatcher create(final Integer batchsize) {
         try {
             if(null == constructor) {
-                ConstructorUtils.getMatchingAccessibleConstructor(clazz, batchsize.getClass());
+                constructor = ConstructorUtils.getMatchingAccessibleConstructor(clazz, batchsize.getClass());
             }
             if(null == constructor) {
                 log.warn(String.format("No matching constructor for parameter %s", batchsize.getClass()));
@@ -54,13 +54,16 @@ public class ActionOperationBatcherFactory extends Factory<ActionOperationBatche
         }
     }
 
-    private static final ActionOperationBatcherFactory singleton = new ActionOperationBatcherFactory();
+    private static ActionOperationBatcherFactory singleton;
 
-    public static ActionOperationBatcher get() {
+    public static synchronized ActionOperationBatcher get() {
         return get(1);
     }
 
-    public static ActionOperationBatcher get(final Integer batchsize) {
+    public static synchronized ActionOperationBatcher get(final Integer batchsize) {
+        if(null == singleton) {
+            singleton = new ActionOperationBatcherFactory();
+        }
         return singleton.create(batchsize);
     }
 }
