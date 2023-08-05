@@ -28,7 +28,7 @@
 			<string>ch.cyberduck.cli.ApplicationTerminal</string>
 			<key>StartOnMainThread</key>
 			<true/>
-			<key>VMOptions</key>
+			<key>VMOptions -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:6005</key>
             <string>$JVM_RUNTIME_ARGS</string>
 			<key>WorkingDirectory</key>
 			<string>$APP_PACKAGE/Contents/Resources</string>
